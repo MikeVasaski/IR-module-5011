@@ -1,6 +1,7 @@
 import nltk
 import numpy as np
-
+import pandas as pd
+import timeit
 import m1
 
 nltk.download('stopwords')
@@ -36,3 +37,29 @@ if __name__ == '__main__':
     query = 'java oracle'
     matched = search(invert_idx, query)
     print(parsed_description.loc[matched].apply(lambda x: ' '.join(x)).head().to_markdown())
+
+def sparse():
+    cleaned_description = m1.get_and_clean_data()
+    cleaned_description = cleaned_description.iloc[:1000]
+
+    tokenized_description = cleaned_description.apply(lambda s: word_tokenize(s))
+    stop_dict = {s: 1 for s in stopwords.words()}
+    sw_removed_description = tokenized_description.apply(lambda s: [word for word in s if word not in stop_dict])
+    sw_removed_description = sw_removed_description.apply(lambda s: [word for word in s if len(word) > 2])
+    ps = PorterStemmer()
+    stemmed_description = sw_removed_description.apply(lambda s: [ps.stem(w) for w in s])
+
+    from sklearn.feature_extraction.text import CountVectorizer
+    cv = CountVectorizer(analyzer=lambda x: x)
+    X = cv.fit_transform(stemmed_description)
+    print(pd.DataFrame(X.toarray(), columns=cv.get_feature_names()))
+    print(X.tocsr()[0,:])
+    # print(X.tocoo()[0,:]) # error
+    timeit.timeit(lambda: np.matmul(X.toarray(), X.toarray().T), number=1)
+    np.shape(np.matmul(X.toarray(), X.toarray().T))
+    timeit.timeit(lambda: X*X.T,number=1)
+    np.shape(X*X.T)
+    timeit.timeit(lambda: X.todok() * X.T.todok(), number=1)
+    timeit.timeit(lambda: X.tolil() * X.T.tolil(), number=1)
+    timeit.timeit(lambda: X.tocoo() * X.T.tocoo(), number=1)
+    timeit.timeit(lambda: X.tocsc() * X.T.tocsc(), number=1)
