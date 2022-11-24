@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
 
 
 def get_and_clean_data():
@@ -49,29 +52,32 @@ def parse_db():
     return db_list
 
 
-cleaned_db = parse_db()
-parsed_description = parse_job_description()
-raw = [None] * len(cleaned_db)
+def parsed_des():
+    cleaned_db = parse_db()
+    parsed_description = parse_job_description()
+    raw = [None] * len(cleaned_db)
 
-for i,db in enumerate(cleaned_db):
-    raw[i] = parsed_description.apply(lambda s: np.all([x in s for x in db])).sum()
-    print(' '.join(db) + ': ' + str(raw[i]) + ' of ' + str(parsed_description.shape[0]))
-# python
-with_python = [None] * len(cleaned_db)
-for i,db in enumerate(cleaned_db):
-    with_python[i] = parsed_description.apply(lambda s: np.all([x in s for x in db]) and 'python' in s).sum()
-    print(' '.join(db) + ' + python: ' + str(with_python[i]) + ' of ' + str(parsed_description.shape[0]))
-for i, db in enumerate(cleaned_db):
-    print(' '.join(db) + ' + python: ' + str(with_python[i]) + ' of ' + str(raw[i]) + ' (' + str(np.around(with_python[i] / raw[i] * 100, 2)) + '%)')
-# -
-# java
-with_java = [None] * len(cleaned_db)
-for i,db in enumerate(cleaned_db):
-    with_java[i] = parsed_description.apply(lambda s: np.all([x in s for x in db]) and 'java' in s).sum()
-    print(' '.join(db) + ' + java: ' + str(with_java[i]) + ' of ' + str(parsed_description.shape[0]))
-for i, db in enumerate(cleaned_db):
-    print(' '.join(db) + ' + java: ' + str(with_java[i]) + ' of ' + str(raw[i]) + ' (' + str(np.around(with_java[i] / raw[i] * 100, 2)) + '%)')
-# -
+    for i,db in enumerate(cleaned_db):
+        raw[i] = parsed_description.apply(lambda s: np.all([x in s for x in db])).sum()
+        print(' '.join(db) + ': ' + str(raw[i]) + ' of ' + str(parsed_description.shape[0]))
+    # python
+    with_python = [None] * len(cleaned_db)
+    for i,db in enumerate(cleaned_db):
+        with_python[i] = parsed_description.apply(lambda s: np.all([x in s for x in db]) and 'python' in s).sum()
+        print(' '.join(db) + ' + python: ' + str(with_python[i]) + ' of ' + str(parsed_description.shape[0]))
+    for i, db in enumerate(cleaned_db):
+        print(' '.join(db) + ' + python: ' + str(with_python[i]) + ' of ' + str(raw[i]) + ' (' + str(np.around(with_python[i] / raw[i] * 100, 2)) + '%)')
+    # -
+    # java
+    with_java = [None] * len(cleaned_db)
+    for i,db in enumerate(cleaned_db):
+        with_java[i] = parsed_description.apply(lambda s: np.all([x in s for x in db]) and 'java' in s).sum()
+        print(' '.join(db) + ' + java: ' + str(with_java[i]) + ' of ' + str(parsed_description.shape[0]))
+    for i, db in enumerate(cleaned_db):
+        print(' '.join(db) + ' + java: ' + str(with_java[i]) + ' of ' + str(raw[i]) + ' (' + str(np.around(with_java[i] / raw[i] * 100, 2)) + '%)')
+    # -
+
+
 def create_index():
     lang = [['java'],['python'],['c'],['kotlin'],['swift'],['rust'],['ruby'],['scala'],['julia'], ['lua']]
     parsed_description = parse_job_description()
@@ -81,24 +87,23 @@ def create_index():
     return query_map
 
 
-str1 = 'the chosen software developer will be part of a larger engineering team developing software for medical devices.'
-str2 = 'we are seeking a seasoned software developer with strong analytical and technical skills to join our public sector technology consulting team.'
-
 nltk.download('stopwords')
 nltk.download('punkt')
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
 
-tokened_str1 = word_tokenize(str1)
-tokened_str2 = word_tokenize(str2)
-tokened_str1 = [w for w in tokened_str1 if len(w) > 2]
-tokened_str2 = [w for w in tokened_str2 if len(w) > 2]
 
-no_sw_str1 = [word for word in tokened_str1 if not word in stopwords.words()]
-no_sw_str2 = [word for word in tokened_str2 if not word in stopwords.words()]
+def tokenizer():
+    str1 = 'the chosen software developer will be part of a larger engineering team developing software for medical devices.'
+    str2 = 'we are seeking a seasoned software developer with strong analytical and technical skills to join our public sector technology consulting team.'
+    tokened_str1 = word_tokenize(str1)
+    tokened_str2 = word_tokenize(str2)
+    tokened_str1 = [w for w in tokened_str1 if len(w) > 2]
+    tokened_str2 = [w for w in tokened_str2 if len(w) > 2]
 
-ps = PorterStemmer()
-stemmed_str1 = np.unique([ps.stem(w) for w in no_sw_str1])
-stemmed_str2 = np.unique([ps.stem(w) for w in no_sw_str2])
-full_list = np.sort(np.concatenate([stemmed_str1, stemmed_str2]))
+    no_sw_str1 = [word for word in tokened_str1 if not word in stopwords.words()]
+    no_sw_str2 = [word for word in tokened_str2 if not word in stopwords.words()]
+
+    ps = PorterStemmer()
+    stemmed_str1 = np.unique([ps.stem(w) for w in no_sw_str1])
+    stemmed_str2 = np.unique([ps.stem(w) for w in no_sw_str2])
+    full_list = np.sort(np.concatenate([stemmed_str1, stemmed_str2]))
+    return full_list

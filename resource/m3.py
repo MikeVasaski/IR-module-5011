@@ -16,10 +16,21 @@ def preProcess(s):
 
 def sk_vectorize():
     cleaned_description = m1.get_and_clean_data()
-    vectorizer = CountVectorizer(preprocessor=preProcess)
+    vectorizer = CountVectorizer(preprocessor=preProcess,ngram_range=(1, 2))
     vectorizer.fit(cleaned_description)
     query = vectorizer.transform(['good at java and python'])
-    print(query)
+    print('Query >> '+query)
     print(vectorizer.inverse_transform(query))
+
+    query = vectorizer.transform(['good at java and python'])
+    print('Query >> '+query)
+    print(vectorizer.inverse_transform(query))
+
+    query = vectorizer.transform(['good at python and java'])
+    print('Query >> '+query)
+    print(vectorizer.inverse_transform(query))
+    print(vectorizer.get_feature_names())
+
+    #tri_gram_vectorizer.inverse_transform(tri_gram_vectorizer.transform([cleaned_description[0]]))
 
 sk_vectorize()
